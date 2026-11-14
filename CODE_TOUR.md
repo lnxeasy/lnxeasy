@@ -38,9 +38,10 @@ src/modules/ports/ports.source.js:36:        const result = await this.run('ss',
 cli.js:70:        await run('systemctl', ['restart', service])
 ```
 
-One file may start programs. It is used twice: `ss -tulpnH` to list ports, and
-`systemctl restart lnxeasy.service` from the command line tool. `execFile` does not use a shell,
-and nothing a visitor sends is part of either command.
+One file may start programs. It is used three times: `ss -tulpnH` to list ports,
+`systemctl restart lnxeasy.service` from the command line tool, and
+`systemctl list-units --type=service --all --no-pager --plain --no-legend` to list services.
+`execFile` does not use a shell, and nothing a visitor sends is part of any command.
 
 **It never connects out to another machine.**
 
@@ -304,6 +305,7 @@ the only other way to change the password is the `lnxeasy passwd` command on the
 | User names for the owners | reads `/etc/passwd` | same |
 | Program file of a process | reads the link `/proc/<pid>/exe` | same |
 | Disks and their free space | reads `/proc/mounts`, then `statfs` on each mount point | [`src/modules/disks/disks.service.js`](src/modules/disks/disks.service.js) |
+| Services: unit, load, active and sub state, description | output of `systemctl list-units --type=service --all --no-pager --plain --no-legend` | [`src/modules/services/services.service.js`](src/modules/services/services.service.js) |
 
 That is the complete list. Nothing else on the server is read: no files in `/home`, no logs,
 no other configuration. The `*.parser.js` files only turn text into objects.
@@ -343,6 +345,7 @@ read-only for it, except for `/var/lib/lnxeasy`.
 | `GET /api/disks` | yes | [`src/modules/disks/disks.routes.js`](src/modules/disks/disks.routes.js) |
 | `GET /api/processes` | yes | [`src/modules/processes/processes.routes.js`](src/modules/processes/processes.routes.js) |
 | `GET /api/process?pid=N` | yes | same |
+| `GET /api/services` | yes | [`src/modules/services/services.routes.js`](src/modules/services/services.routes.js) |
 | files in `public/` | yes, except the login page and its assets | [`src/http/static.js`](src/http/static.js) |
 
 To confirm that the list is complete:
@@ -351,7 +354,7 @@ To confirm that the list is complete:
 grep -rnE "router\.(get|post)\(" server.js src
 ```
 
-It prints fourteen lines, the fourteen endpoints above.
+It prints fifteen lines, the fifteen endpoints above.
 
 ## 8. The page in the browser
 
@@ -359,7 +362,7 @@ It prints fourteen lines, the fourteen endpoints above.
 |------|------|
 | [`public/login.html`](public/login.html), [`public/login.js`](public/login.js) | The sign-in form. Sends the form to `/api/auth/login` and nothing else. |
 | [`public/index.html`](public/index.html) | The dashboard markup. |
-| [`public/app.js`](public/app.js) | Fetches `/api/system` and `/api/ports` every five seconds and draws them. |
+| [`public/app.js`](public/app.js) | Fetches `/api/system`, `/api/disks`, `/api/ports` and `/api/services` every five seconds and draws them. |
 | [`public/processes.js`](public/processes.js) | The Processes section and the window with the details of one process. |
 | [`public/styles.css`](public/styles.css) | The look. |
 

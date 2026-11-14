@@ -9,8 +9,8 @@ A small web panel for watching an Ubuntu server from the browser instead of the 
 It runs on the server as a single Node.js process that serves both the web page and a JSON API.
 No external dependencies: only Node.js core modules on the server, plain HTML, CSS and JavaScript in the browser.
 
-> Early stage. The system overview, storage, listening ports and processes are available so far.
-> Services and server management are planned.
+> Early stage. The system overview, storage, listening ports, processes and services are available so far.
+> Server management is planned.
 
 ## Install on a server
 
@@ -208,6 +208,7 @@ Open `http://127.0.0.1:4321` and sign in as `admin`. Change `HOST` and `PORT` in
 | `GET /api/ports` | Listening TCP and UDP ports and the processes that hold them |
 | `GET /api/disks` | Disks and other file systems with total, used and free space |
 | `GET /api/processes` | Every process with its CPU, memory, owner and command, plus CPU use per core |
+| `GET /api/services` | Every service with its load, active and sub state and description |
 | `GET /api/process?pid=N` | One process with its parent, children and listening ports |
 | `POST /api/auth/login` | Signs in with `{"username", "password", "code"}` and sets the session cookie |
 | `POST /api/auth/logout` | Signs out |
