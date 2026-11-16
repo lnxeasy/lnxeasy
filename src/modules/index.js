@@ -7,6 +7,8 @@ import {ProcessesService} from './processes/processes.service.js'
 import {regProcessesRoutes} from './processes/processes.routes.js'
 import {DisksService} from './disks/disks.service.js'
 import {regDisksRoutes} from './disks/disks.routes.js'
+import {ServicesService} from './services/services.service.js'
+import {regServicesRoutes} from './services/services.routes.js'
 
 
 export function regModules(router, dependencies) {
@@ -22,5 +24,8 @@ export function regModules(router, dependencies) {
 
     const disksService = new DisksService(dependencies.fs)
     regDisksRoutes(router, disksService)
+
+    const servicesService = new ServicesService(dependencies.run)
+    regServicesRoutes(router, servicesService)
 
 }

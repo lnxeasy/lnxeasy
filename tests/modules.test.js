@@ -27,7 +27,10 @@ function createFakeReadFile() {
 }
 
 function createFakeRun() {
-    return async () => {
+    return async (command) => {
+        if (command === 'systemctl') {
+            return { stdout: 'cron.service loaded active running Cron daemon\n', stderr: '' }
+        }
         return { stdout: 'tcp LISTEN 0 128 0.0.0.0:22 0.0.0.0:*\n', stderr: '' }
     }
 }
@@ -104,5 +107,28 @@ test('the ports module uses the run function it was given', async () => {
     assert.equal(res.statusCode, 200)
     assert.deepEqual(JSON.parse(res.body).data, [
         { protocol: 'tcp', state: 'LISTEN', address: '0.0.0.0', port: 22, processes: [] },
+    ])
+})
+
+test('regModules registers the services module routes', () => {
+    const router = new Router()
+
+    regModules(router, createFakeDependencies())
+
+    const handler = router.match('GET', '/api/services')
+    assert.equal(typeof handler, 'function')
+})
+
+test('the services module uses the run function it was given', async () => {
+    const router = new Router()
+    regModules(router, createFakeDependencies())
+    const handler = router.match('GET', '/api/services')
+    const res = createFakeResponse()
+
+    await handler({}, res)
+
+    assert.equal(res.statusCode, 200)
+    assert.deepEqual(JSON.parse(res.body).data, [
+        { unit: 'cron.service', load: 'loaded', active: 'active', sub: 'running', description: 'Cron daemon' },
     ])
 })

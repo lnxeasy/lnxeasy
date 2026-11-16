@@ -11,6 +11,8 @@ const state = {
     protocol: 'all',
     reach: 'all',
     process: 'all',
+    services: [],
+    serviceFilter: 'all',
     sortBy: 'port',
     sortDescending: false,
     page: 1,
@@ -188,6 +190,9 @@ function hideError(prefix) {
 
 function describeError(error) {
     if (error.code === 'COMMAND_NOT_FOUND') {
+        if (error.message.includes('systemctl')) {
+            return error.message + '. Install it on the server (the "systemctl" command is part of systemd).'
+        }
         return error.message + '. Install it on the server (the "ss" command is part of the iproute2 package).'
     }
     if (error.code === 'COMMAND_TIMEOUT') {
@@ -640,6 +645,76 @@ function renderPorts() {
     })
 }
 
+function serviceMatchesFilter(service) {
+    if (state.serviceFilter === 'running') {
+        return service.active === 'active'
+    }
+    if (state.serviceFilter === 'failed') {
+        return service.active === 'failed'
+    }
+    return true
+}
+
+function createServiceRow(service) {
+    const tr = document.createElement('tr')
+
+    tr.appendChild(createElement('td', '', service.unit))
+    tr.appendChild(createElement('td', '', service.load))
+
+    const activeCell = document.createElement('td')
+    let badgeClass = 'badge is-quiet'
+    if (service.active === 'active') {
+        badgeClass = 'badge is-running'
+    }
+    if (service.active === 'failed') {
+        badgeClass = 'badge is-trouble'
+    }
+    activeCell.appendChild(createElement('span', badgeClass, service.active))
+    tr.appendChild(activeCell)
+
+    tr.appendChild(createElement('td', '', service.sub))
+    tr.appendChild(createElement('td', '', service.description))
+
+    return tr
+}
+
+function renderServices() {
+    const matching = []
+    for (const service of state.services) {
+        if (serviceMatchesFilter(service)) {
+            matching.push(service)
+        }
+    }
+
+    const body = byId('services-body')
+    body.textContent = ''
+    for (const service of matching) {
+        body.appendChild(createServiceRow(service))
+    }
+
+    if (matching.length === state.services.length) {
+        setText('services-count', state.services.length + ' services')
+    } else {
+        setText('services-count', matching.length + ' of ' + state.services.length + ' services')
+    }
+
+    byId('services-empty').hidden = matching.length > 0
+
+    let running = 0
+    let failed = 0
+    for (const service of state.services) {
+        if (service.active === 'active') {
+            running = running + 1
+        }
+        if (service.active === 'failed') {
+            failed = failed + 1
+        }
+    }
+    setSegmentCount('filter-services', 'all', state.services.length)
+    setSegmentCount('filter-services', 'running', running)
+    setSegmentCount('filter-services', 'failed', failed)
+}
+
 function setStatus(kind, text) {
     const status = byId('status')
     status.classList.toggle('is-online', kind === 'online')
@@ -695,6 +770,16 @@ async function refresh() {
             showError('ports', error)
         }
         renderPorts()
+
+        try {
+            state.services = await fetchData('/api/services')
+            hideError('services')
+            anySuccess = true
+        } catch (error) {
+            state.services = []
+            showError('services', error)
+        }
+        renderServices()
     }
 
     if (anySuccess) {
@@ -745,6 +830,14 @@ function setSearch(text) {
 wireSegments('filter-protocol', 'protocol')
 wireSegments('filter-reach', 'reach')
 wireSegments('filter-process', 'process')
+
+for (const button of document.querySelectorAll('#filter-services .segment')) {
+    button.addEventListener('click', () => {
+        state.serviceFilter = button.dataset.value
+        selectSegment('filter-services', button.dataset.value)
+        renderServices()
+    })
+}
 
 byId('ports-search').addEventListener('input', (event) => {
     setSearch(event.target.value)

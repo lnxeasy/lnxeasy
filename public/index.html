@@ -190,6 +190,47 @@
             Rows marked “hidden” have no process that lnxeasy can see. Run the installer again to set up the helper that reads process names.
         </p>
     </section>
+
+    <section aria-labelledby="services-title">
+        <div class="section-head">
+            <h2 class="section-title" id="services-title">Services</h2>
+            <span class="section-note" id="services-count"></span>
+        </div>
+
+        <div class="panel">
+            <div class="filters">
+                <div class="filter-group">
+                    <span class="filter-label">Show</span>
+                    <div class="segmented" id="filter-services">
+                        <button class="segment is-active" type="button" data-value="all">All <span class="segment-count" data-count="all"></span></button>
+                        <button class="segment" type="button" data-value="running">Running <span class="segment-count" data-count="running"></span></button>
+                        <button class="segment" type="button" data-value="failed">Failed <span class="segment-count" data-count="failed"></span></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-inline" id="services-error" hidden>
+                <strong id="services-error-title"></strong>
+                <span id="services-error-text"></span>
+            </div>
+
+            <div class="table-wrap">
+                <table class="table" id="services-table">
+                    <thead>
+                    <tr>
+                        <th>Unit</th>
+                        <th>Load</th>
+                        <th>Active</th>
+                        <th>Sub</th>
+                        <th>Description</th>
+                    </tr>
+                    </thead>
+                    <tbody id="services-body"></tbody>
+                </table>
+                <p class="empty" id="services-empty" hidden>No services match this filter.</p>
+            </div>
+        </div>
+    </section>
     </div>
 
     <div id="view-processes" hidden>
